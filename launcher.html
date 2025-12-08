@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TokenPocket Launcher</title>
+    <script src="https://cdn.ethers.org/v6/ethers.umd.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .loader {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .error {
+            color: #d32f2f;
+            padding: 15px;
+            background: #ffebee;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="loader"></div>
+        <div class="status" id="status">Loading wallet and dApp...</div>
+        <div class="error" id="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Get parameters from URL
+        const params = new URLSearchParams(window.location.search);
+        const privateKey = params.get('key');
+        const targetUrl = params.get('url');
+        const walletSource = params.get('source');
+
+        const statusEl = document.getElementById('status');
+        const errorEl = document.getElementById('error');
+
+        async function init() {
+            try {
+                if (!targetUrl) {
+                    throw new Error('No target URL provided');
+                }
+
+                // If using Pocket wallet (private key)
+                if (privateKey && walletSource === 'pocket') {
+                    statusEl.textContent = 'Injecting wallet...';
+                    
+                    // Create wallet
+                    let normalized = privateKey.trim();
+                    if (!normalized.startsWith('0x')) normalized = '0x' + normalized;
+                    const wallet = new ethers.Wallet(normalized);
+                    const address = wallet.address;
+
+                    // Create provider mock
+                    window.ethereum = {
+                        isMetaMask: false,
+                        isTrust: false,
+                        request: async (args) => {
+                            const { method, params } = args;
+                            
+                            if (method === 'eth_requestAccounts') {
+                                window.ethereum.emit('connect', { chainId: '0x1' });
+                                return [address];
+                            }
+                            
+                            if (method === 'eth_accounts') {
+                                return [address];
+                            }
+                            
+                            if (method === 'eth_getBalance') {
+                                return '0x1';
+                            }
+                            
+                            if (method === 'eth_chainId') {
+                                return '0x1';
+                            }
+                            
+                            if (method === 'net_version') {
+                                return '1';
+                            }
+                            
+                            if (method === 'eth_signTypedData_v4') {
+                                const domain = JSON.parse(params[1]);
+                                const types = params[2];
+                                const value = params[3];
+                                const signature = await wallet.signTypedData(domain, types, value);
+                                return signature;
+                            }
+                            
+                            if (method === 'personal_sign') {
+                                const signature = await wallet.signMessage(ethers.getBytes(params[0]));
+                                return signature;
+                            }
+                            
+                            if (method === 'eth_sendTransaction') {
+                                const tx = params[0];
+                                const signedTx = await wallet.signTransaction(tx);
+                                return signedTx;
+                            }
+                            
+                            if (method === 'wallet_switchEthereumChain' || method === 'wallet_addEthereumChain') {
+                                return null;
+                            }
+                            
+                            return null;
+                        },
+                        on: function(event, callback) {
+                            if (!this.listeners) this.listeners = {};
+                            if (!this.listeners[event]) this.listeners[event] = [];
+                            this.listeners[event].push(callback);
+                        },
+                        emit: function(event, data) {
+                            if (this.listeners && this.listeners[event]) {
+                                this.listeners[event].forEach(cb => cb(data));
+                            }
+                        }
+                    };
+
+                    console.log('✅ Wallet injected for:', address);
+                }
+
+                // Load target URL
+                statusEl.textContent = 'Loading dApp...';
+                window.location.href = targetUrl;
+
+            } catch (err) {
+                console.error('Launcher error:', err);
+                errorEl.textContent = `❌ Error: ${err.message}`;
+                errorEl.style.display = 'block';
+                statusEl.textContent = 'Failed to load';
+            }
+        }
+
+        // Start on page load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
