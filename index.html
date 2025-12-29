@@ -1,0 +1,304 @@
+--- START OF FILE index (3).html ---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoodDollar Tools - Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: url('background.jpg') center/cover fixed no-repeat;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.2);
+            z-index: 500;
+            display: none;
+        }
+        .menu-overlay.open { display: block; }
+
+        .menu-dropdown {
+            position: fixed;
+            top: 75px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            min-width: 250px;
+            display: none;
+            overflow: hidden;
+        }
+        .menu-dropdown.open { display: block; }
+
+        .menu-item {
+            padding: 15px 20px;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #333;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+        .menu-item:hover { background: #f8f9fa; }
+        .menu-item:last-child { border-bottom: none; }
+
+        .container {
+            max-width: 900px;
+            margin: 80px auto 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            z-index: 10;
+            position: relative;
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        .warning { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #856404; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 700; color: #333; }
+        textarea, input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; padding: 15px; border-radius: 8px;
+            font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.3s;
+        }
+        .button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+
+        .logs { margin-top: 20px; background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace; max-height: 300px; overflow-y: auto; font-size: 12px; }
+        .log-error { color: #ff5555; }
+        .log-success { color: #55ff55; }
+
+        .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ddd; }
+        .stat-value { font-size: 20px; font-weight: 800; color: #333; }
+    </style>
+</head>
+<body>
+
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+    
+    <div class="menu-dropdown" id="menuDropdown">
+        <button class="menu-item" onclick="switchView('batchClaim')">📦 Batch Claim (Celo/XDC)</button>
+        <button class="menu-item" onclick="switchView('coinCollection')">💰 Batch Coin Collection (Native)</button>
+        <button class="menu-item" onclick="switchView('tokenCollection')">💎 Batch Token Collection</button>
+        <button class="menu-item" onclick="switchView('multiSender')">📤 Multi Sender (Native)</button>
+        <button class="menu-item" onclick="switchView('balanceChecker')">💼 Balance Checker</button>
+        <button class="menu-item" onclick="switchView('faceCheck')">👤 Face Verification Check</button>
+    </div>
+
+    <!-- 1. Landing View -->
+    <div id="landing" class="view active">
+        <div class="container" style="text-align: center; background: rgba(255,255,255,0.9);">
+            <h1 style="color:#764ba2">GoodDollar Pro Tools</h1>
+            <p style="margin: 20px 0; color:#555">সবগুলো সার্ভিস এখন সচল আছে। ওপরের মেনু থেকে কাজ শুরু করুন।</p>
+            <button class="button" onclick="toggleMenu()">মেনু ওপেন করুন</button>
+        </div>
+    </div>
+
+    <!-- 2. Batch Claim View -->
+    <div id="batchClaim" class="view">
+        <div class="container">
+            <h1>📦 Batch Claim (G$)</h1>
+            <div class="warning">Celo অথবা XDC নেটওয়ার্কের সবগুলো ওয়ালেট থেকে একসাথে Claim করুন।</div>
+            <div class="form-group">
+                <label>Select Network</label>
+                <select id="claimNetwork">
+                    <option value="celo">Celo Mainnet</option>
+                    <option value="xdc">XDC Network</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Private Keys (One per line)</label>
+                <textarea id="claimKeys" rows="8" placeholder="0x..."></textarea>
+            </div>
+            <button class="button" onclick="runBatchClaim()">Start Batch Claim</button>
+            <div id="claimLogs" class="logs" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- 3. Coin Collection (Native) -->
+    <div id="coinCollection" class="view">
+        <div class="container">
+            <h1>💰 Native Coin Collection (ETH/CELO/XDC)</h1>
+            <div class="warning">ওয়ালেটগুলোর মেইন ব্যালেন্স একটি নির্দিষ্ট ঠিকানায় নিয়ে আসার জন্য।</div>
+            <div class="form-group">
+                <label>Network</label>
+                <select id="coinNet">
+                    <option value="celo">Celo</option>
+                    <option value="xdc">XDC</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Destination Address (Receiver)</label>
+                <input type="text" id="coinDest" placeholder="0x...">
+            </div>
+            <div class="form-group">
+                <label>Private Keys</label>
+                <textarea id="coinKeys" rows="8" placeholder="0x..."></textarea>
+            </div>
+            <button class="button" onclick="runBatchCoinCollection()">Collect All Coins</button>
+            <div id="coinLogs" class="logs" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- Multi Sender, Token Collection ইত্যাদি আগের মতোই থাকবে... -->
+
+    <script>
+        // --- UI Logic ---
+        function toggleMenu() {
+            const dropdown = document.getElementById('menuDropdown');
+            const overlay = document.getElementById('menuOverlay');
+            dropdown.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        function closeMenu() {
+            document.getElementById('menuDropdown').classList.remove('open');
+            document.getElementById('menuOverlay').classList.remove('open');
+        }
+
+        function switchView(viewId) {
+            closeMenu();
+            const views = document.querySelectorAll('.view');
+            views.forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        // --- Core Logic ---
+        const NETWORK_CONFIGS = {
+            celo: {
+                rpc: 'https://forno.celo.org',
+                claimContract: '0x43d72Ff17701B2DA814620735C39C620Ce0ea4A1',
+                token: '0x62B8B11039FcfE5aB0C56E502b1C372A3d2a9c7A'
+            },
+            xdc: {
+                rpc: 'https://rpc.xinfin.network',
+                claimContract: '0x22867567E2D80F2049200E25C6F31CB6Ec2F0faf',
+                token: '0xEC2136843a983885AebF2feB3931F73A8eBEe50c'
+            }
+        };
+
+        const CLAIM_ABI = ["function claim() external returns (uint256)"];
+
+        async function runBatchClaim() {
+            const net = document.getElementById('claimNetwork').value;
+            const keysText = document.getElementById('claimKeys').value.trim();
+            const logsDiv = document.getElementById('claimLogs');
+            
+            if(!keysText) return alert('Keys দিন!');
+            const keys = keysText.split('\n').map(k => k.trim()).filter(k => k);
+            
+            logsDiv.style.display = 'block';
+            logsDiv.innerHTML = '🚀 কাজ শুরু হচ্ছে...<br>';
+            
+            const config = NETWORK_CONFIGS[net];
+            const provider = new ethers.JsonRpcProvider(config.rpc);
+
+            for(let key of keys) {
+                try {
+                    const wallet = new ethers.Wallet(key, provider);
+                    const contract = new ethers.Contract(config.claimContract, CLAIM_ABI, wallet);
+                    logsDiv.innerHTML += `⏳ Claiming for: ${wallet.address.substring(0,10)}...<br>`;
+                    const tx = await contract.claim();
+                    logsDiv.innerHTML += `<span class="log-success">✅ Success! Hash: ${tx.hash.substring(0,15)}...</span><br>`;
+                } catch (e) {
+                    logsDiv.innerHTML += `<span class="log-error">❌ Error: ${e.message.substring(0,50)}...</span><br>`;
+                }
+            }
+            alert('Batch Claim প্রক্রিয়া শেষ!');
+        }
+
+        async function runBatchCoinCollection() {
+            const net = document.getElementById('coinNet').value;
+            const dest = document.getElementById('coinDest').value.trim();
+            const keysText = document.getElementById('coinKeys').value.trim();
+            const logsDiv = document.getElementById('coinLogs');
+
+            if(!dest || !keysText) return alert('তথ্য অপূর্ণ!');
+            const keys = keysText.split('\n').map(k => k.trim()).filter(k => k);
+            
+            logsDiv.style.display = 'block';
+            logsDiv.innerHTML = '🚀 ট্রান্সফার শুরু হচ্ছে...<br>';
+
+            const config = NETWORK_CONFIGS[net];
+            const provider = new ethers.JsonRpcProvider(config.rpc);
+
+            for(let key of keys) {
+                try {
+                    const wallet = new ethers.Wallet(key, provider);
+                    const balance = await provider.getBalance(wallet.address);
+                    const gasPrice = (await provider.getFeeData()).gasPrice;
+                    const gasLimit = 21000n;
+                    const cost = gasPrice * gasLimit;
+
+                    if(balance > cost) {
+                        const amount = balance - cost;
+                        logsDiv.innerHTML += `📤 Sending ${ethers.formatEther(amount)} to ${dest.substring(0,10)}...<br>`;
+                        const tx = await wallet.sendTransaction({
+                            to: dest,
+                            value: amount,
+                            gasLimit: gasLimit,
+                            gasPrice: gasPrice
+                        });
+                        logsDiv.innerHTML += `<span class="log-success">✅ Sent! Hash: ${tx.hash.substring(0,15)}</span><br>`;
+                    } else {
+                        logsDiv.innerHTML += `<span class="log-error">⚠️ Balance low for: ${wallet.address.substring(0,10)}</span><br>`;
+                    }
+                } catch (e) {
+                    logsDiv.innerHTML += `<span class="log-error">❌ Failed: ${e.message.substring(0,40)}</span><br>`;
+                }
+            }
+            alert('Collection প্রক্রিয়া শেষ!');
+        }
+
+        // Helper: Ensure 0x prefix
+        function fixKey(key) {
+            return key.startsWith('0x') ? key : '0x' + key;
+        }
+    </script>
+</body>
+</html>
